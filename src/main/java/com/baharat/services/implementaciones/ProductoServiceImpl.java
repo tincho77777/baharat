@@ -1,17 +1,26 @@
 package com.baharat.services.implementaciones;
 
+import com.baharat.exceptions.ProductoInexistenteException;
+import com.baharat.exceptions.ProductoYaExisteException;
+import com.baharat.exceptions.StockInsuficienteException;
 import com.baharat.models.entities.Producto;
 import com.baharat.repositories.ProductoRepository;
 import com.baharat.services.ProductoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
+import javax.validation.Valid;
+import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import static com.baharat.parametros.Mensajes.ERROR_ELIMINAR_PRODUCTO;
+import static com.baharat.parametros.Mensajes.PRODUCTO_EXISTENTE;
+
 @Service
+@Validated
 public class ProductoServiceImpl implements ProductoService {
 
 	@Autowired
@@ -19,9 +28,12 @@ public class ProductoServiceImpl implements ProductoService {
 
 	@Override
 	@Transactional(readOnly = true)
-	//esto lo que hace es ofrecernos el begin(), el commit(), el rollbacK() al ejecutar una transaccion
 	public List<Producto> consultarProductos() {
-		return repository.findAll();
+		List<Producto> productos = repository.findAll();
+		if (productos.isEmpty()) {
+			return Collections.emptyList();
+		}
+		return productos;
 	}
 
 	@Override
@@ -31,34 +43,40 @@ public class ProductoServiceImpl implements ProductoService {
 	}
 
 	@Override
-	@Transactional //estos no llevan el readOnly porque estos si ejecutan acciones que modifican la base de datos
-	public Producto agregarProducto(Producto producto) {
+	@Transactional
+	public Producto agregarProducto(@Valid Producto producto) throws ProductoYaExisteException {
+		if (repository.existsByNombreProducto(producto.getNombreProducto())) {
+			throw new ProductoYaExisteException(String.format(PRODUCTO_EXISTENTE, producto.getNombreProducto()));
+		}
 		return repository.save(producto);
 	}
 
 	@Override
 	@Transactional
-	public void eliminarProducto(Integer id) {
+	public void eliminarProducto(Integer id) throws ProductoInexistenteException {
+		if (!repository.existsById(id)) {
+			throw new ProductoInexistenteException(String.format(ERROR_ELIMINAR_PRODUCTO, id));
+		}
 		repository.deleteById(id);
 	}
 
 	@Override
-	public Optional<Integer> consultarStockPorNombre(String nombreProducto) {
+	public Optional<Integer> consultarStockPorNombre(String nombreProducto) throws StockInsuficienteException {
 		Optional<Producto> productoOptional = repository.findByNombreProducto(nombreProducto);
 		if (productoOptional.isPresent()) {
 			return Optional.ofNullable(productoOptional.get().getStock());
 		} else {
-			throw new NoSuchElementException("Producto sin stock!");
+			throw new StockInsuficienteException();
 		}
 	}
 
 	@Override
-	public Optional<Producto> consultarProductoPorNombre(String nombreProducto) {
+	public Optional<Producto> consultarProductoPorNombre(String nombreProducto) throws ProductoInexistenteException {
 		Optional<Producto> productoOptional = repository.findByNombreProducto(nombreProducto);
 		if (productoOptional.isPresent()) {
 			return productoOptional;
 		} else {
-			throw new NoSuchElementException("Producto inexistente!");
+			throw new ProductoInexistenteException("Producto inexistente!");
 		}
 	}
 }

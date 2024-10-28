@@ -26,6 +26,7 @@ import java.util.Optional;
 @Service
 public class PedidoServiceImpl implements PedidoService {
 
+	public static final String lineaDivisora = "-----------------------------------------------";
 	@Autowired
 	protected ProductoRepository productoRepository;
 	@Autowired
@@ -117,60 +118,85 @@ public class PedidoServiceImpl implements PedidoService {
 
 		// Crear un nuevo documento PDF
 		PDDocument document = new PDDocument();
-		PDPage page = new PDPage(PDRectangle.A5); // Crear una página tamaño A5
+		PDPage page = new PDPage(PDRectangle.A5); // Página tamaño A5
 		document.addPage(page);
 
 		PDPageContentStream contentStream = new PDPageContentStream(document, page);
 
-		// Escribir el contenido del pedido en el PDF
+		// Usar una fuente de ancho fijo para evitar problemas de alineación
+		contentStream.setFont(PDType1Font.COURIER_BOLD, 18);
 		contentStream.beginText();
 
-		//Header
-		contentStream.setFont(PDType1Font.HELVETICA_BOLD, 18);
+		// Header
 		contentStream.newLineAtOffset(74, 550); // Posicionar el texto en el documento
 		contentStream.showText("BAHARAT ALMACEN NATURAL");
 
 		// Información del pedido
-		contentStream.setFont(PDType1Font.HELVETICA_BOLD, 16);
-		contentStream.newLineAtOffset(-24, -40);
+		contentStream.setFont(PDType1Font.COURIER_BOLD, 16);
+		contentStream.newLineAtOffset(-29, -40);
 		contentStream.showText("Factura - Pedido #" + pedido.getIdPedido());
 		contentStream.newLineAtOffset(0, -20);
-		contentStream.setFont(PDType1Font.HELVETICA, 12);
+		contentStream.setFont(PDType1Font.COURIER, 12);
 		contentStream.showText("Cliente: " + pedido.getCliente());
 		contentStream.newLineAtOffset(0, -20);
 		contentStream.showText("Fecha: " + pedido.getFechaPedido().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
+		// Márgenes y ancho fijo de la tabla
+		float margenIzquierdo = 45; // Margen izquierdo
+
 		// Listado de productos del pedido
 		contentStream.newLineAtOffset(0, -20);
-		contentStream.showText("-------------------------------------------------------------------------");
-		contentStream.newLineAtOffset(0, -10);
-		contentStream.showText("CANT   DESCRIPCION                    PRECIO");
-		contentStream.newLineAtOffset(0, -10);
-		contentStream.showText("-------------------------------------------------------------------------");
+		contentStream.showText(lineaDivisora);
+		contentStream.newLineAtOffset(0, -12);
+		contentStream.showText("CANT  DESCRIPCION                PRECIO");
+		contentStream.newLineAtOffset(0, -12);
+		contentStream.showText(lineaDivisora);
 		contentStream.endText();
 
 		float yPosition = 415;
 		Integer cantidadTotal = 0;
+
 		for (DetallePedido detalle : pedido.getListadoDetallePedidos()) {
 			establecerNombreProducto(detalle);
+
+			// Fijar los anchos de columna
+			String cantidad = String.format("%-5s", detalle.getCantidad().toString()); // Columna de 5 caracteres para cantidad
+			String descripcion = cortarTexto(detalle.getNombreProducto(), 25); // Cortar la descripción si es muy larga
+			String precio = String.format("%7s", String.format("%.2f", detalle.getSubTotal())); // Formato para el precio con 2 decimales
+
+			// Alineación exacta para cada columna
 			contentStream.beginText();
-			contentStream.setFont(PDType1Font.HELVETICA, 12);
-			contentStream.newLineAtOffset(60, yPosition);
-			contentStream.showText(detalle.getCantidad() + "        " + detalle.getNombreProducto() + "                  " + detalle.getSubTotal());
+			contentStream.setFont(PDType1Font.COURIER, 12);
+
+			// Imprimir la cantidad
+			contentStream.newLineAtOffset(margenIzquierdo + 8, yPosition);
+			contentStream.showText(cantidad);
+
+			// Desplazar para la descripción
+			contentStream.newLineAtOffset(45, 0);
+			contentStream.showText(descripcion);
+
+			// Desplazar para el precio
+			contentStream.newLineAtOffset(180, 0);
+			contentStream.showText(precio);
+
 			contentStream.endText();
+
 			cantidadTotal += detalle.getCantidad();
 			yPosition -= 20; // Reducir el valor para bajar la línea
 		}
 
-		// Total del pedido
 		contentStream.beginText();
-		contentStream.setFont(PDType1Font.HELVETICA, 12);
-		contentStream.newLineAtOffset(50, yPosition);
-		contentStream.showText("-------------------------------------------------------------------------");
-		contentStream.newLineAtOffset(0, -10);
-		contentStream.showText("   " + cantidadTotal + "               TOTAL     PESOS         " + pedido.getTotal());
-		contentStream.newLineAtOffset(0, -10);
-		contentStream.showText("-------------------------------------------------------------------------");
+		contentStream.setFont(PDType1Font.COURIER, 12);
+		contentStream.newLineAtOffset(margenIzquierdo, yPosition); // Usamos el mismo margen izquierdo
+		contentStream.showText(lineaDivisora);
+
+		contentStream.newLineAtOffset(0, -12);
+		contentStream.showText(" " + cantidadTotal + "         TOTAL         PESOS   " + pedido.getTotal());
+
+		contentStream.newLineAtOffset(0, -12);
+		contentStream.showText(lineaDivisora);
+
 
 		// Finalizar el contenido
 		contentStream.endText();
@@ -188,6 +214,14 @@ public class PedidoServiceImpl implements PedidoService {
 		if (detalle != null && detalle.getProducto() != null) {
 			detalle.setNombreProducto(detalle.getProducto().getNombreProducto());
 		}
+	}
+
+	// Función para cortar el texto si excede una longitud fija
+	private String cortarTexto(String texto, Integer longitudMaxima) {
+		if (texto.length() > longitudMaxima) {
+			return texto.substring(0, longitudMaxima - 3) + "..."; // Cortar y agregar "..."
+		}
+		return texto;
 	}
 
 }

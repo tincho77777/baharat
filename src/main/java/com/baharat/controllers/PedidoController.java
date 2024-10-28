@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
+@RequestMapping("/pedidos")
 public class PedidoController {
 
 	@Autowired
@@ -22,7 +23,7 @@ public class PedidoController {
 	@Autowired
 	protected ProductoService productoService;
 
-	@PostMapping("/pedidos/procesar")
+	@PostMapping("/procesar")
 	public ResponseEntity<Pedido> procesarPedido(@RequestBody Pedido pedido) {
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(pedidoService.procesarPedido(pedido));
@@ -31,18 +32,18 @@ public class PedidoController {
 		}
 	}
 
-	@GetMapping("/pedidos/{id}")
+	@GetMapping("/{id}")
 	public ResponseEntity<Pedido> obtenerPedidoPorId(@PathVariable Integer id) {
 		Optional<Pedido> pedidoOptional = pedidoService.obtenerPedidoPorId(id);
 		return pedidoOptional.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
-	@GetMapping("/pedidos/estados")
+	@GetMapping("/estados")
 	public List<Pedido> obtenerPedidosPorEstado(@RequestParam(name = "estado") String estado) {
 		return pedidoService.obtenerPedidosPorEstado(estado);
 	}
 
-	@GetMapping("/pedidos/{idPedido}/factura")
+	@GetMapping("/{idPedido}/factura")
 	public ResponseEntity<byte[]> generarFactura(@PathVariable Integer idPedido) {
 		try {
 			Optional<Pedido> pedido = pedidoService.obtenerPedidoPorId(idPedido);

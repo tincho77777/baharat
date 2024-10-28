@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class DetallePedidoImpl implements DetallePedidoService {
+public class DetallePedidoServiceImpl implements DetallePedidoService {
 
 	@Autowired
 	protected ProductoRepository productoRepository;
