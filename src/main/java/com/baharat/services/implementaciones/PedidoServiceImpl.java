@@ -23,10 +23,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
+import static com.baharat.parametros.Mensajes.ERROR_PEDIDO_NO_ENCONTRADO;
+import static com.baharat.parametros.Mensajes.ERROR_PRODUCTO_NO_ENCONTRADO;
+import static com.baharat.parametros.Parametros.PROCESADO;
+
 @Service
 public class PedidoServiceImpl implements PedidoService {
-
-	public static final String lineaDivisora = "-----------------------------------------------";
 	@Autowired
 	protected ProductoRepository productoRepository;
 	@Autowired
@@ -61,20 +63,20 @@ public class PedidoServiceImpl implements PedidoService {
 
 	@Override
 	public Pedido actualizarEstadoPedido(Integer idPedido, String nuevoEstado) {
-		Pedido pedido = pedidoRepository.findById(idPedido).orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+		Pedido pedido = pedidoRepository.findById(idPedido).orElseThrow(() -> new RuntimeException(ERROR_PEDIDO_NO_ENCONTRADO));
 		pedido.setEstado(nuevoEstado);
 		return pedidoRepository.save(pedido);
 	}
 
 	@Override
 	public Optional<Pedido> obtenerPedidoPorId(Integer idPedido) {
-		return Optional.ofNullable(pedidoRepository.findById(idPedido).orElseThrow(() -> new RuntimeException("Pedido no encontrado")));
+		return Optional.ofNullable(pedidoRepository.findById(idPedido).orElseThrow(() -> new RuntimeException(ERROR_PEDIDO_NO_ENCONTRADO)));
 	}
 
 	private void verificarStock(DetallePedido detalle,
 	                            Pedido pedido) {
 		Producto productoBd = productoRepository.findByNombreProducto(detalle.getNombreProducto()).orElseThrow(
-				() -> new RuntimeException("Producto no encontrado")
+				() -> new RuntimeException(ERROR_PRODUCTO_NO_ENCONTRADO)
 		);
 
 		if (productoBd.getStock() < detalle.getCantidad()) {
@@ -93,7 +95,7 @@ public class PedidoServiceImpl implements PedidoService {
 	private void guardarPedido(Pedido pedido,
 	                           BigDecimal total) {
 		pedido.setFechaPedido(LocalDate.now());
-		pedido.setEstado("PROCESADO");
+		pedido.setEstado(PROCESADO);
 		pedido.setTotal(total);
 	}
 
@@ -118,87 +120,114 @@ public class PedidoServiceImpl implements PedidoService {
 
 		// Crear un nuevo documento PDF
 		PDDocument document = new PDDocument();
-		PDPage page = new PDPage(PDRectangle.A5); // Página tamaño A5
+		PDPage page = new PDPage(PDRectangle.A6); // Página tamaño A6 para dar aspecto de ticket
 		document.addPage(page);
 
 		PDPageContentStream contentStream = new PDPageContentStream(document, page);
 
 		// Usar una fuente de ancho fijo para evitar problemas de alineación
-		contentStream.setFont(PDType1Font.COURIER_BOLD, 18);
+		contentStream.setFont(PDType1Font.COURIER_BOLD, 10);
 		contentStream.beginText();
 
-		// Header
-		contentStream.newLineAtOffset(74, 550); // Posicionar el texto en el documento
+		// Encabezado centrado
+		contentStream.newLineAtOffset(75, 400);
 		contentStream.showText("BAHARAT ALMACEN NATURAL");
 
+		// Información del negocio
+		contentStream.setFont(PDType1Font.COURIER, 8);
+		contentStream.newLineAtOffset(-30, -20);
+		contentStream.showText("Paso de los Andes 1628, Godoy Cruz");
+		contentStream.newLineAtOffset(0, -10);
+		contentStream.showText("Tel: (261) 123-4567");
+
 		// Información del pedido
-		contentStream.setFont(PDType1Font.COURIER_BOLD, 16);
-		contentStream.newLineAtOffset(-29, -40);
+		contentStream.newLineAtOffset(0, -20);
+		contentStream.setFont(PDType1Font.COURIER_BOLD, 8);
 		contentStream.showText("Factura - Pedido #" + pedido.getIdPedido());
-		contentStream.newLineAtOffset(0, -20);
-		contentStream.setFont(PDType1Font.COURIER, 12);
+		contentStream.newLineAtOffset(0, -10);
+		contentStream.setFont(PDType1Font.COURIER, 8);
 		contentStream.showText("Cliente: " + pedido.getCliente());
-		contentStream.newLineAtOffset(0, -20);
+		contentStream.newLineAtOffset(0, -10);
 		contentStream.showText("Fecha: " + pedido.getFechaPedido().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
-		// Márgenes y ancho fijo de la tabla
-		float margenIzquierdo = 45; // Margen izquierdo
-
-		// Listado de productos del pedido
+		// Separador de encabezado
+		String lineaSeparador = "****************************************";
 		contentStream.newLineAtOffset(0, -20);
-		contentStream.showText(lineaDivisora);
+		contentStream.showText(lineaSeparador);
+
+		// Tabla de productos
 		contentStream.newLineAtOffset(0, -12);
-		contentStream.showText("CANT  DESCRIPCION                PRECIO");
+		contentStream.showText("CANT  DESCRIPCION          PRECIO");
 		contentStream.newLineAtOffset(0, -12);
-		contentStream.showText(lineaDivisora);
+		contentStream.showText(lineaSeparador);
 		contentStream.endText();
 
-		float yPosition = 415;
+		float yPosition = 270;
 		Integer cantidadTotal = 0;
 
+		// Listado de productos
 		for (DetallePedido detalle : pedido.getListadoDetallePedidos()) {
 			establecerNombreProducto(detalle);
 
-			// Fijar los anchos de columna
-			String cantidad = String.format("%-5s", detalle.getCantidad().toString()); // Columna de 5 caracteres para cantidad
-			String descripcion = cortarTexto(detalle.getNombreProducto(), 25); // Cortar la descripción si es muy larga
-			String precio = String.format("%7s", String.format("%.2f", detalle.getSubTotal())); // Formato para el precio con 2 decimales
+			// Configurar las columnas
+			String cantidad = String.format("%-4s", detalle.getCantidad().toString());
+			String descripcion = cortarTexto(detalle.getNombreProducto());
+			String precio = String.format("%7s", String.format("%.2f", detalle.getSubTotal()));
 
-			// Alineación exacta para cada columna
 			contentStream.beginText();
-			contentStream.setFont(PDType1Font.COURIER, 12);
+			contentStream.setFont(PDType1Font.COURIER, 8);
 
-			// Imprimir la cantidad
-			contentStream.newLineAtOffset(margenIzquierdo + 8, yPosition);
+			// Cantidad
+			contentStream.newLineAtOffset(50, yPosition);
 			contentStream.showText(cantidad);
 
-			// Desplazar para la descripción
-			contentStream.newLineAtOffset(45, 0);
+			// Descripción
+			contentStream.newLineAtOffset(25, 0);
 			contentStream.showText(descripcion);
 
-			// Desplazar para el precio
-			contentStream.newLineAtOffset(180, 0);
+			// Precio
+			contentStream.newLineAtOffset(95, 0);
 			contentStream.showText(precio);
 
 			contentStream.endText();
 
 			cantidadTotal += detalle.getCantidad();
-			yPosition -= 20; // Reducir el valor para bajar la línea
+			yPosition -= 15;
 		}
 
+		// Totales y resumen (mantener después de la lista de productos)
 		contentStream.beginText();
-		contentStream.setFont(PDType1Font.COURIER, 12);
-		contentStream.newLineAtOffset(margenIzquierdo, yPosition); // Usamos el mismo margen izquierdo
-		contentStream.showText(lineaDivisora);
+		contentStream.setFont(PDType1Font.COURIER, 8);
+		contentStream.newLineAtOffset(45, yPosition - 10);
+		contentStream.showText(lineaSeparador);
 
 		contentStream.newLineAtOffset(0, -12);
-		contentStream.showText(" " + cantidadTotal + "         TOTAL         PESOS   " + pedido.getTotal());
+		contentStream.showText(" TOTAL CANTIDAD: " + cantidadTotal);
+		contentStream.newLineAtOffset(0, -12);
+		contentStream.showText(" TOTAL PESOS: " + String.format("%.2f", pedido.getTotal()));
 
 		contentStream.newLineAtOffset(0, -12);
-		contentStream.showText(lineaDivisora);
+		contentStream.showText(lineaSeparador);
+		contentStream.endText();
 
+		// Pie de página en la parte inferior de la página
+		contentStream.beginText();
+		contentStream.setFont(PDType1Font.COURIER, 8);
 
-		// Finalizar el contenido
+		float footerYPosition = 30; // Parte inferior de la página
+		contentStream.newLineAtOffset(45, footerYPosition);
+		contentStream.showText(lineaSeparador);
+		contentStream.newLineAtOffset(0, 12);
+		contentStream.showText("¡Gracias por su compra!");
+		contentStream.newLineAtOffset(0, 12);
+		contentStream.showText("Horario: Lunes a Sábado 9:00 - 21:00");
+		contentStream.newLineAtOffset(0, 12);
+		contentStream.showText("Consultas: info@baharat.com");
+		contentStream.newLineAtOffset(0, 12);
+		contentStream.showText("No se aceptan devoluciones sin factura.");
+		contentStream.newLineAtOffset(0, 12);
+		contentStream.showText(lineaSeparador);
+
 		contentStream.endText();
 		contentStream.close();
 
@@ -217,9 +246,9 @@ public class PedidoServiceImpl implements PedidoService {
 	}
 
 	// Función para cortar el texto si excede una longitud fija
-	private String cortarTexto(String texto, Integer longitudMaxima) {
-		if (texto.length() > longitudMaxima) {
-			return texto.substring(0, longitudMaxima - 3) + "..."; // Cortar y agregar "..."
+	private String cortarTexto(String texto) {
+		if (texto.length() > 18) {
+			return texto.substring(0, 18 - 3) + "...";
 		}
 		return texto;
 	}

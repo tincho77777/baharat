@@ -7,17 +7,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
+@RequestMapping("/detalle-pedidos")
 public class DetallePedidoController {
 	@Autowired
 	protected DetallePedidoService detallePedidoService;
 
-	@GetMapping("/detalle-pedidos/{id}")
+	@GetMapping("/{id}")
 	public ResponseEntity<DetallePedido> getDetallePorId(@PathVariable Integer id) {
 		Optional<DetallePedido> detalleOptional = detallePedidoService.obtenerDetallesPorId(id);
 
@@ -25,7 +27,7 @@ public class DetallePedidoController {
 		return detalleOptional.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
-	@GetMapping("/detalle-pedidos/pedidos/{idPedido}")
+	@GetMapping("/pedidos/{idPedido}")
 	public ResponseEntity<List<DetallePedido>> getDetallePorIdPedido(@PathVariable Pedido idPedido) {
 		List<DetallePedido> detalles = detallePedidoService.obtenerDetallesPorPedido(idPedido);
 

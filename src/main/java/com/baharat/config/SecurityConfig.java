@@ -17,6 +17,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import static com.baharat.parametros.Parametros.ADMIN;
+import static com.baharat.parametros.Parametros.EMPLEADO;
+
 @Configuration
 @EnableWebSecurity
 @Data
@@ -33,8 +36,10 @@ public class SecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtRequestFilter jwtRequestFilter) throws Exception {
 
 		http.authorizeHttpRequests(authorize -> authorize
-						.requestMatchers("/admin/**").hasRole("ADMIN") // Solo administradores
-						.requestMatchers("/empleado/**").hasRole("EMPLEADO") // Solo empleados
+						.requestMatchers("/productos/**").hasAnyRole(ADMIN, EMPLEADO) // empleados y admin
+						.requestMatchers("/pedidos/**").hasAnyRole(ADMIN, EMPLEADO) // empleados y admin
+						.requestMatchers("/detalle-pedidos/**").hasAnyRole(ADMIN, EMPLEADO) // empleados y admin
+						.requestMatchers("/reportes/**").hasRole(ADMIN) // solo admin
 						.requestMatchers("/usuarios/registrar", "/auth/login").permitAll() // Permitir acceso público a login y registro
 						.anyRequest().authenticated() // Todas las demás rutas requieren autenticación
 				)

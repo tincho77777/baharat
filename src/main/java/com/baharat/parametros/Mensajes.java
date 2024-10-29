@@ -21,8 +21,7 @@ public class Mensajes {
 	public static final String PRODUCTO_EXISTENTE = "El producto con nombre %s ya existe: ";
 	public static final String ERROR_ELIMINAR_PRODUCTO = "El producto no se puede eliminar porque el ID %s no existe: ";
 	public static final String ERROR_PRODUCTO_NO_ENCONTRADO = "Producto con ID %s no encontrado: ";
-
-
+	public static final String ERROR_PEDIDO_NO_ENCONTRADO = "Pedido no encontrado: ";
 
 	private Mensajes() {
 	}
