@@ -6,12 +6,12 @@ import com.baharat.exceptions.StockInsuficienteException;
 import com.baharat.models.entities.Producto;
 import com.baharat.repositories.ProductoRepository;
 import com.baharat.services.ProductoService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import javax.validation.Valid;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;

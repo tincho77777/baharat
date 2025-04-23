@@ -41,6 +41,13 @@ public class SecurityConfig {
 						.requestMatchers("/detalle-pedidos/**").hasAnyRole(ADMIN, EMPLEADO) // empleados y admin
 						.requestMatchers("/reportes/**").hasRole(ADMIN) // solo admin
 						.requestMatchers("/usuarios/registrar", "/auth/login").permitAll() // Permitir acceso público a login y registro
+						.requestMatchers( //permite el acceso a swagger
+								"/swagger-ui.html", // Página principal
+								"/swagger-ui/**",          // Recursos de Swagger UI
+								"/v3/api-docs/**",         // Documentación de la API
+								"/swagger-resources/**",   // Recursos de Swagger (a veces necesarios)
+								"/webjars/**"              // Archivos estáticos usados por Swagger
+						).permitAll()
 						.anyRequest().authenticated() // Todas las demás rutas requieren autenticación
 				)
 				.sessionManagement(session -> session

@@ -1,5 +1,6 @@
 package com.baharat.controllers;
 
+import com.baharat.controllers.swagger.SwaggerUsuarioController;
 import com.baharat.exceptions.RolInvalidoException;
 import com.baharat.exceptions.UsuarioNoEncontradoException;
 import com.baharat.models.entities.Usuario;
@@ -17,7 +18,7 @@ import static com.baharat.parametros.Mensajes.*;
 
 @RestController
 @RequestMapping("/usuarios")
-public class UsuarioController {
+public class UsuarioController implements SwaggerUsuarioController {
 
 	@Autowired
 	protected UsuarioService usuarioService;

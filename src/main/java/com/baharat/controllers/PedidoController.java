@@ -1,5 +1,6 @@
 package com.baharat.controllers;
 
+import com.baharat.controllers.swagger.SwaggerPedidoController;
 import com.baharat.models.entities.Pedido;
 import com.baharat.services.PedidoService;
 import com.baharat.services.ProductoService;
@@ -15,13 +16,10 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/pedidos")
-public class PedidoController {
+public class PedidoController implements SwaggerPedidoController {
 
 	@Autowired
 	protected PedidoService pedidoService;
-
-	@Autowired
-	protected ProductoService productoService;
 
 	@PostMapping("/procesar")
 	public ResponseEntity<Pedido> procesarPedido(@RequestBody Pedido pedido) {

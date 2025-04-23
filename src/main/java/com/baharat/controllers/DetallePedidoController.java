@@ -1,5 +1,6 @@
 package com.baharat.controllers;
 
+import com.baharat.controllers.swagger.SwaggerDetallePedidoController;
 import com.baharat.models.entities.DetallePedido;
 import com.baharat.models.entities.Pedido;
 import com.baharat.services.DetallePedidoService;
@@ -15,7 +16,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/detalle-pedidos")
-public class DetallePedidoController {
+public class DetallePedidoController implements SwaggerDetallePedidoController {
 	@Autowired
 	protected DetallePedidoService detallePedidoService;
 

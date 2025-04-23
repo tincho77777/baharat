@@ -1,28 +1,28 @@
 package com.baharat.controllers;
 
+import com.baharat.controllers.swagger.SwaggerProductoController;
 import com.baharat.exceptions.ProductoInexistenteException;
 import com.baharat.exceptions.ProductoYaExisteException;
 import com.baharat.exceptions.StockInsuficienteException;
 import com.baharat.models.entities.Producto;
 import com.baharat.services.ProductoService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.util.List;
 import java.util.Optional;
 
 import static com.baharat.parametros.Mensajes.ERROR_PRODUCTO_NO_ENCONTRADO;
 import static com.baharat.parametros.Mensajes.PRODUCTO_EXISTENTE;
 
-
 @RestController
 @RequestMapping("/productos")
 @Validated
-public class ProductoController {
+public class ProductoController implements SwaggerProductoController {
 	@Autowired
 	protected ProductoService productoService;
 

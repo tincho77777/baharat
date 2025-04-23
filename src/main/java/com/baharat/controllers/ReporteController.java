@@ -1,5 +1,6 @@
 package com.baharat.controllers;
 
+import com.baharat.controllers.swagger.SwaggerReporteController;
 import com.baharat.dtos.ProductoMasVendidoDTO;
 import com.baharat.models.entities.Producto;
 import com.baharat.services.ReporteService;
@@ -17,7 +18,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/reportes")
-public class ReporteController {
+public class ReporteController implements SwaggerReporteController {
 
 	@Autowired
 	protected ReporteService reporteService;
